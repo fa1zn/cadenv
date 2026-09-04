@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cadenv"
+version = "0.1.0"
+description = "A CAD generation environment whose reward is gated against its own exploits"
+requires-python = ">=3.10"
+dependencies = ["cadverify", "build123d>=0.11", "numpy>=2", "scipy>=1.14"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["cadenv*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --tb=short"
+markers = ["slow: runs the pose-invariant reward (alignment is ~0.6s per call)"]
