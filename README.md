@@ -149,7 +149,7 @@ needs invariants; rejection needs alignment plus a pointwise distance.
 
 ```bash
 pip install -e ".[dev]"
-pytest                    #  tests
+pytest                    # 0 tests
 pytest -m "not slow"      # skips the pose-invariant gate (~0.6s per alignment)
 ```
 
