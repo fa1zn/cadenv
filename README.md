@@ -149,14 +149,20 @@ needs invariants; rejection needs alignment plus a pointwise distance.
 
 ```bash
 pip install -e ".[dev]"
-pytest                    # 9 tests
+pytest                    #  tests
 pytest -m "not slow"      # skips the pose-invariant gate (~0.6s per alignment)
 ```
 
 ## Limitations
 
-- **The task generator makes plates.** Boxes with holes and pockets. It exercises the
-  reward, not the frontier of CAD.
+- **The generator makes machined-plate-like parts.** Five bases, cuts, bosses, ribs,
+  fillets and patterns — genuinely varied within that family, and still nothing like
+  a casting, a sheet-metal part, or an assembly.
+- **Difficulty tiers are a structural proxy**, not a measured solve rate. Calibrating
+  them needs a reference solver.
+- **79.4% of sampled programs build.** The 20% that fail are mostly fillet and chamfer
+  edge-selection failures, so the shipped distribution is biased away from the parts
+  where those operations are hardest to apply.
 - **The attack suite is the exploits I thought of.** A gate is a lower bound on
   reward soundness — passing means no *known* attack scores, never that none exists.
   New attacks belong in `policies.py`, not in a comment.
