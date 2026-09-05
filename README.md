@@ -75,16 +75,59 @@ prediction about any particular model.
 
 ## Tasks
 
-The default task set is generated, not downloaded. A part is constructed from a
-random spec — plate dimensions, through-holes, an optional pocket — and the prompt is
-written from the same numbers, so ground truth is exact by construction and the spec
-cannot drift from the solid. `test_prompt_and_reference_cannot_drift` asserts that.
+Generated, not downloaded. A part is a *program* — a sequence of operations sampled
+from a grammar over five base shapes, six cut types, three additive features, fillets
+and chamfers, and three pattern types — so the reachable space grows with program
+length rather than being fixed by a template's parameters. The prompt is written from
+the same numbers that built the solid, so ground truth is exact by construction and
+the spec cannot drift from the part.
 
 ```python
 from cadenv.task import procedural_taskset, corpus_taskset
 tasks = procedural_taskset(50)                 # self-contained, no download
 tasks = corpus_taskset("~/path/to/corpus")     # a delivered dataset instead
 ```
+
+### A 10,000-task set
+
+```bash
+python -c "from cadenv.dataset import build_dataset; \
+           print(build_dataset(10000, 'data/tasks-10k.jsonl'))"
+```
+
+| | |
+|---|---|
+| kept / attempted | 10,000 / 12,596 — **79.4% yield** |
+| build time | 303 s |
+| duplicates rejected | 82, by rigid-motion-invariant signature |
+| tiers | easy 3,420 · medium 3,887 · **hard 2,693** |
+| manifest | 5.7 MB |
+
+**The artifact is a manifest, not geometry.** Every row carries the seed that
+produced it, so 10,000 solids reproduce byte-for-byte from 5.7 MB of JSONL instead of
+shipping ~500 MB of STEP. That also gives the strongest integrity check available: if
+a row's recorded invariants don't match what its seed rebuilds, something is wrong.
+300 sampled rows rebuild with **0 mismatches**.
+
+**Diversity is measured, not assumed**, because ten thousand samples from a template
+is one task repeated:
+
+| | 558 parts | 1,200 parts |
+|---|---|---|
+| unique signatures | 557 | 1,200 |
+| duplicate rate | 0.18% | 0.0% |
+| near-identical pairs | 0.0% | 0.0% |
+| pairwise median distance | 2.826 | 2.826 |
+
+The pairwise median is unchanged between the two, so the generator is not collapsing
+as it scales.
+
+**The difficulty tiers are honest about what they are.** `complexity` is a weighted
+sum over the program's operations — a structural proxy. That is still an assertion,
+which is exactly the criticism this project levelled at a corpus that labelled
+everything "easy" and never checked. Calibrating the tiers against observed solve
+rates needs a reference solver and has not been done. What can be said is that the
+spread exists at all: 27% hard, against 0% in the corpus this replaces.
 
 ## The sound reward
 
