@@ -129,6 +129,46 @@ everything "easy" and never checked. Calibrating the tiers against observed solv
 rates needs a reference solver and has not been done. What can be said is that the
 spread exists at all: 27% hard, against 0% in the corpus this replaces.
 
+## Using it with Miles
+
+[Miles](https://github.com/radixark/miles) takes a reward as one function —
+`async def custom_rm(args, sample) -> float` — pointed at by `--custom-rm-path`.
+`cadenv.miles_adapter` implements it.
+
+```bash
+python -c "from cadenv.miles_adapter import export_for_miles; \
+           export_for_miles('data/tasks-10k.jsonl', 'data/miles-hard.jsonl', tier='hard')"
+
+miles train ... \
+  --prompt-data data/miles-hard.jsonl \
+  --custom-rm-path cadenv.miles_adapter.cad_reward \
+  --group-rm --custom-rm-path cadenv.miles_adapter.batched_cad_reward
+```
+
+**Tasks are seed-addressable, which is why this is a two-field integration.**
+`label` carries the seed; the reward rebuilds exact ground truth from that integer
+alone. Nothing is mounted, downloaded, or kept in sync between the trainer and the
+grader — the decision to ship seeds instead of geometry pays off here more than it
+does in the manifest.
+
+| behaviour | reward | recorded in `metadata["cadenv"]` |
+|---|---|---|
+| correct solid | 1.0 | shape distance 0.0000% |
+| wrong shape (50mm cube) | 0.0 | `failed_gate: volume`, shape 18.88% |
+| code raises | 0.0 | `failed_gate: execution` |
+| no code block | 0.0 | `failed_gate: execution` |
+| missing label | 0.0 | — |
+
+Generated code runs in a subprocess, because a model writing CAD will eventually
+write code that hangs or segfaults OpenCascade, and neither is catchable in-process.
+A zero always carries the gate that produced it, so a run that collapses to zero
+reward is debuggable rather than mysterious.
+
+**Throughput: 83 reward calls per minute** (16 concurrent, 0.72 s per sample
+wall-clock). That is fine for evaluation and thin for on-policy RL — the cost is
+subprocess spawn plus OpenCascade load plus alignment, and caching the reference
+solids across a run would remove most of it.
+
 ## The sound reward
 
 `pose-invariant` is built on [cadverify](https://github.com/fa1zn/cadverify) and
