@@ -8,6 +8,7 @@ crashing the run, and a zero is debuggable afterwards.
 
 import asyncio
 import inspect
+from pathlib import Path
 from dataclasses import dataclass, field
 
 import pytest
@@ -28,9 +29,13 @@ class Sample:
 
 
 SEED = 3
+# The repo root is interpolated here, at collection time. The string below is
+# generated code executed in a subprocess, so a Path(__file__) inside it would
+# resolve to the temp file, not to this repo.
+_REPO = str(Path(__file__).resolve().parents[1])
 CORRECT = f"""```python
 import sys
-sys.path.insert(0, "/Users/faizansyed/normal/cadenv")
+sys.path.insert(0, {_REPO!r})
 from cadenv.generate import sample_program, build
 result, _ = build(sample_program({SEED}))
 ```"""
